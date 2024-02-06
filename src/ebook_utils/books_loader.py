@@ -41,6 +41,10 @@ COLUMN_NAME_MAPPING = {
 }
 
 class Book: 
+    """
+        Represents a Book's metadata fields
+    """
+
     def __init__(self, productID, title, author, subtitle, bisac_1, bisac_1_text, bisac_2, bisac_2_text,  thema_1, wgs_text_1, price, keywords, description, author_bio, language='en'):
         self.productID = productID
         self.title = title
@@ -67,19 +71,33 @@ class Book:
         self.new_description = ''
 
 class BooksLoader():
+    """
+        Loads Book's metadata from csv or excel files.
+    """
+
     current_dir = os.path.dirname(__file__)
-    _books = []
-    _process_only = None
+    _books: list[Book] = []
+    _process_only = ''
 
     def __init__(self, books) -> None:
         self._books = books
 
     @property
     def books(self):
+        """
+            Books metadata currently loaded.
+        """
         return self._books
 
     @classmethod
     def from_csv(cls, source, start=0, end=9348, process_only_path=''):
+        """
+            Loads books metadata from a csv file.
+            
+            source: Path to csv file.
+            process_only_path: Path to file with subset of book ids to process.
+        """
+
         df = pd.read_csv(source, delimiter=DELIMITER, low_memory=False)
         books = []
         if process_only_path:
@@ -122,6 +140,13 @@ class BooksLoader():
     
     @classmethod
     def from_xlsx(cls, source, start=0, end=9348, process_only_path=''):
+        """
+            Loads books metadata from an excel file.
+            
+            source: Path to csv file.
+            process_only_path: Path to file with subset of book ids to process.
+        """
+
         df = pd.read_excel(source, engine='openpyxl')
         books = []
         
