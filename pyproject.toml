@@ -1,0 +1,16 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ebook_utils"
+description = "Utils for handling ebooks scripts"
+requires-python = ">=3.10"
+keywords = ["ebook", "epub"]
+license = {text = "MIT"}
+dependencies = [
+    "pandas",
+    "babel",
+    "openpyxl"
+]
+dynamic = ["version"]
