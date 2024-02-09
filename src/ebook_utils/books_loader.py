@@ -45,30 +45,23 @@ class Book:
         Represents a Book's metadata fields
     """
 
-    def __init__(self, productID, title, author, subtitle, bisac_1, bisac_1_text, bisac_2, bisac_2_text,  thema_1, wgs_text_1, price, keywords, description, author_bio, language='en'):
-        self.productID = productID
-        self.title = title
-        self.author = author
-        self.subtitle = subtitle
-        self.bisac_1 = bisac_1
-        self.bisac_1_text = bisac_1_text
-        self.bisac_2 = bisac_2
-        self.bisac_2_text = bisac_2_text
-        self.keywords = keywords
-        self.description = description
-        self.author_bio = author_bio
-        self.thema_1 = thema_1
-        self.thema_1_text = ''
-        self.thema_2 = ''
-        self.thema_2_text = ''
+    _fields: dict = {}
 
-        self.wgs_code_1 = ''
-        self.wgs_text_1 = wgs_text_1
-        self.wgs_code_2 = ''
-        self.wgs_text_2 = ''
-        self.price = price
-        self.language = utils.get_language_from_code(language)
-        self.new_description = ''
+    def __init__(self, initial_fields: dict, language='en') -> None:
+        for field in initial_fields.keys():
+            self._fields[field] = initial_fields[field]
+
+        if 'language' not in self._fields.keys():
+            self._fields['language'] = utils.get_language_from_code(language)
+
+    def fields(self):
+        """
+            Returns the field list on Book object
+        """
+        return self._fields.keys()
+
+    def __getitem__(self, key):
+        return self._fields[key]
 
 class BooksLoader():
     """
@@ -116,24 +109,27 @@ class BooksLoader():
             if process_only_path:
                 if row[UNIQUE_COLUMN] not in process_only_ids:
                     continue
-            productID = row[UNIQUE_COLUMN]
-            title = row[COLUMN_TITLE]
-            contributor = row[COLUMN_AUTHOR]
-            author = utils.get_author_from_contributors_row(contributor)
-            subtitle = row.get(COLUMN_SUBTITLE, '')
-            language = row[COLUMN_LANGUAGE]
-            bisac_1 = row.get(COLUMN_BISAC_1_CODE, '')
-            bisac_2 = row.get(COLUMN_BISAC_2_CODE, '')
-            bisac_1_text = row.get(COLUMN_BISAC_1_TEXT, '')
-            bisac_2_text = row.get(COLUMN_BISAC_2_TEXT, '')
-            thema_1 = row.get(COLUMN_THEMA_1_TEXT, '')
-            wgs_text_1 = row.get(COLUMN_WGS_1_TEXT, '')
-            keywords = row.get(COLUMN_KEYWORDS, '')
-            description = row.get(COLUMN_DESCRIPTION, '')
-            author_bio = row.get(COLUMN_AUTHOR_BIO, '')
-        
-            price  = row.get(COLUMN_PRICES, '')
-            nbook = Book(productID, title, author, subtitle , bisac_1, bisac_1_text, bisac_2, bisac_2_text, thema_1, wgs_text_1, price,  keywords, description, author_bio, language=language)
+            
+            book_fields = {
+                'productID': row[UNIQUE_COLUMN],
+                'title': row[COLUMN_TITLE],
+                'contributor': row[COLUMN_AUTHOR],
+                'author': utils.get_author_from_contributors_row(row[COLUMN_AUTHOR]),
+                'subtitle': row.get(COLUMN_SUBTITLE, ''),
+                'language': row[COLUMN_LANGUAGE],
+                'bisac_1': row.get(COLUMN_BISAC_1_CODE, ''),
+                'bisac_2': row.get(COLUMN_BISAC_2_CODE, ''),
+                'bisac_1_text': row.get(COLUMN_BISAC_1_TEXT, ''),
+                'bisac_2_text': row.get(COLUMN_BISAC_2_TEXT, ''),
+                'thema_1': row.get(COLUMN_THEMA_1_TEXT, ''),
+                'wgs_text_1': row.get(COLUMN_WGS_1_TEXT, ''),
+                'keywords': row.get(COLUMN_KEYWORDS, ''),
+                'description': row.get(COLUMN_DESCRIPTION, ''),
+                'author_bio': row.get(COLUMN_AUTHOR_BIO, ''),
+                'price': row.get(COLUMN_PRICES, '')
+            }
+            
+            nbook = Book(book_fields)
             books.append(nbook)
         df.columns = original_column_names
         return cls(books)
@@ -165,26 +161,27 @@ class BooksLoader():
             if process_only_path:
                 if row['id'] not in process_only_ids:
                     continue
-
-            productID = row[UNIQUE_COLUMN]
-            title = row[COLUMN_TITLE]
-            contributor = row[COLUMN_AUTHOR]
-            author = utils.get_author_from_contributors_row(contributor)
-            subtitle = row[COLUMN_SUBTITLE]
-            bisac_1 = row.get(COLUMN_BISAC_1_CODE, '')
-            bisac_2 = row.get(COLUMN_BISAC_2_CODE, '')
-            bisac_1_text = row.get(COLUMN_BISAC_1_TEXT, '')
-            bisac_2_text = row.get(COLUMN_BISAC_2_TEXT, '')
             
-            thema_1 = ''
-            wgs_text_1 = ''
-            keywords = row.get(COLUMN_KEYWORDS, '')
-            description = row.get(COLUMN_DESCRIPTION, '')
-            author_bio = ''
-            language = row[COLUMN_LANGUAGE]
-            price  = ''
+            book_fields = {
+                'productID': row[UNIQUE_COLUMN],
+                'title': row[COLUMN_TITLE],
+                'contributor': row[COLUMN_AUTHOR],
+                'author': utils.get_author_from_contributors_row(row[COLUMN_AUTHOR]),
+                'subtitle': row[COLUMN_SUBTITLE],
+                'bisac_1': row.get(COLUMN_BISAC_1_CODE, ''),
+                'bisac_2': row.get(COLUMN_BISAC_2_CODE, ''),
+                'bisac_1_text': row.get(COLUMN_BISAC_1_TEXT, ''),
+                'bisac_2_text': row.get(COLUMN_BISAC_2_TEXT, ''),
+                'thema_1': '',
+                'wgs_text_1': '',
+                'keywords': row.get(COLUMN_KEYWORDS, ''),
+                'description': row.get(COLUMN_DESCRIPTION, ''),
+                'author_bio': '',
+                'language': row[COLUMN_LANGUAGE],
+                'price': ''
+            }            
             
-            nbook = Book(productID, title, author, subtitle, bisac_1, bisac_1_text, bisac_2, bisac_2_text, thema_1, wgs_text_1, price, keywords, description, author_bio, language=language)
+            nbook = Book(book_fields)
             books.append(nbook)
         df.columns = original_column_names
         return cls(books)
