@@ -63,6 +63,9 @@ class Book:
     def __getitem__(self, key):
         return self._fields[key]
 
+    def __setitem__(self, key, value):
+        self._fields[key] = value
+
 class BooksLoader():
     """
         Loads Book's metadata from csv or excel files.
