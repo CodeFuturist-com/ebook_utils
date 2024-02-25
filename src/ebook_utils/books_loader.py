@@ -45,9 +45,9 @@ class Book:
         Represents a Book's metadata fields
     """
 
-    _fields: dict = {}
-
     def __init__(self, initial_fields: dict, language='en') -> None:
+        self._fields = dict()
+
         for field in initial_fields.keys():
             self._fields[field] = initial_fields[field]
 
@@ -72,14 +72,12 @@ class BooksLoader():
     """
 
     current_dir = os.path.dirname(__file__)
-    _books: list[Book] = []
-    _process_only = ''
 
     def __init__(self, books) -> None:
         self._books = books
 
     @property
-    def books(self):
+    def books(self) -> list[Book]:
         """
             Books metadata currently loaded.
         """
@@ -96,6 +94,7 @@ class BooksLoader():
 
         df = pd.read_csv(source, delimiter=DELIMITER, low_memory=False)
         books = []
+
         if process_only_path:
             #open file and get product ids
             only_path = os.path.join(cls.current_dir, process_only_path)
@@ -104,6 +103,7 @@ class BooksLoader():
 
         original_column_names = df.columns.copy()
         df = utils.map_column_names(df, COLUMN_NAME_MAPPING)
+
         for index, row in df.iterrows():
             if index < start:
                 continue
@@ -112,7 +112,7 @@ class BooksLoader():
             if process_only_path:
                 if row[UNIQUE_COLUMN] not in process_only_ids:
                     continue
-            
+                
             book_fields = {
                 'productID': row[UNIQUE_COLUMN],
                 'title': row[COLUMN_TITLE],
