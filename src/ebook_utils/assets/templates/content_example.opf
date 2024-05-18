@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://www.idpf.org/2007/opf" unique-identifier="ISBN" version="2.0">
+  <metadata xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:opf="http://www.idpf.org/2007/opf">
+    <dc:identifier id="ISBN" opf:scheme="ISBN">Ingresar codigo ISBN aqui</dc:identifier>
+    <dc:title>Ingresar titulo aqui</dc:title>
+    <dc:language>en</dc:language>
+    <dc:creator>Ingresar autor aqui</dc:creator>
+    <dc:publisher>Ingresar editorial aqui</dc:publisher>
+  </metadata>
+  <manifest>
+    <item id="ncx" href="toc.ncx" media-type="application/x-dtbncx+xml" />
+    <!--Ingresar textos de manifest aqui-->
+  </manifest>
+  <spine toc="ncx">
+    <!-- Ingresar contenido de spine aqui-->
+  </spine>
+  <guide>
+    <reference type="toc" title="Table of Contents" href="Text/part0001.xhtml" />
+  </guide>
+</package>
