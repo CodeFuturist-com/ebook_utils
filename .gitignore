@@ -1,3 +1,9 @@
 *.egg-info
 build
 dist
+
+==========human-toilet==========
+__pycache__
+venv
+src/ebook_utils/assets/epubs
+==========human-toilet==========
