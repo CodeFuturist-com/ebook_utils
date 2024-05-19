@@ -1,3 +1,5 @@
+from templates import *
+
 #metodos auxiliares
 from utils import create_folder, compress, rem_dir, check_epub
 
@@ -37,12 +39,51 @@ class BookToc:
     def __getitem__(self, key):
         return self._pages[key]
 
+#objeto para manejar los navpoints de toc.ncx
+class NavPoint:
+  def __init__(self, page: BookChapter, index: int) -> None:
+    self._page = page
+    self._index = index
+    
+  #generar el navpoint
+  def _gen_content(self) -> str:
+    result = ''
+    result += f'<navPoint id="navPoint-{self._index}" playOrder="{self._index}">\n'
+    result += '<navLabel>\n'
+    result += f'<text>{self._page.title}</text>\n'
+    result += '</navLabel>\n'
+    result += f'<content src="Text/part000{self._index - 3}.xhtml"/>\n'
+    result += '</navPoint>\n'
+    return result
+    
+  @property
+  def content(self) -> str:
+    return self._gen_content()
+
+#objeto para manejar los links de la toc
+class TocLink:
+  def __init__(self, index: int, title: str) -> None:
+    self._index = index
+    self._title = title
+    
+  #generar el link
+  def _gen_content(self) -> str:
+    result = ''
+    result += '<div class="sgc-toc-level-1 sgc-1">\n'
+    result += f' <a href="part000{self._index}.xhtml">{self._title}</a>\n'
+    result += '</div>\n'
+    return result
+    
+  @property
+  def content(self) -> str:
+    return self._gen_content()
+
 class Book:
   def __init__(self, toc: BookToc, meta: BookMeta) -> None:
       self._meta = meta
       self._toc = toc
 
-  def export(self) -> None:
+  def export(self) -> str:
     #estructura fija
     self._gen_static_structure()
     
@@ -51,12 +92,13 @@ class Book:
     self._gen_content()
     self._gen_text()
   
-    #comprimir el epub y borrar el descomprimido
+    #comprimir el epub, borrar el descomprimido y chequear el epub
     compress('my_epub', self._meta['ean'], '.epub')
     rem_dir(['my_epub'])
-    
-    #chequear el epub
     check_epub(f'{self._meta["ean"]}.epub')
+    
+    #devolver la ruta
+    return f"{self._meta['ean']}.epub "
       
   #crear la estructura inicial que no varia en ningun epub  
   def _gen_static_structure(self):
@@ -70,8 +112,7 @@ class Book:
   
     #styles
     with open('my_epub/OEBPS/Styles/frontpage.css', 'w') as f1:
-      with open('src/ebook_utils/assets/templates/presentation_epub_example.css', 'r') as f2:
-        f1.write(f2.read())
+      f1.write(FRONTPAGE_STYLES)
         
     #mimetype
     with open('my_epub/mimetype', 'w') as f:
@@ -79,25 +120,12 @@ class Book:
       
     #container.xml
     with open('my_epub/META-INF/container.xml', 'w') as f1:
-      with open('src/ebook_utils/assets/templates/container_example.xml', 'r') as f2:
-        f1.write(f2.read())
+      f1.write(CONTAINERT_XML)
         
   #generar el toc.ncx     
   def _gen_toc_ncx(self):
     with open('my_epub/OEBPS/toc.ncx', 'w') as f1:
-      with open('src/ebook_utils/assets/templates/toc_example.ncx', 'r') as f2:
-        for line in f2.readlines():
-          if 'Ingresar codigo ISBN aqui' in line:
-            f1.write(line.replace('Ingresar codigo ISBN aqui', self._meta['ean']))
-            
-          elif 'Ingresar titulo aqui' in line:
-            f1.write(line.replace('Ingresar titulo aqui', self._meta['title']))
-          
-          elif 'Ingresar capitulos aqui' in line:
-            f1.write(self._gen_navPoint())
-            
-          else:
-            f1.write(line)
+      f1.write(NCX.format(self._meta['ean'], self._meta['title'], self._gen_navPoint()))
             
   #generar los navPoints
   def _gen_navPoint(self) -> str:
@@ -105,41 +133,16 @@ class Book:
     i = 3
 
     for page in self._toc._pages:
-      result += f'<navPoint id="navPoint-{i}" playOrder="{i}">\n'
-      result += '<navLabel>\n'
-      result += f'<text>{page.title}</text>\n'
-      result += '</navLabel>\n'
-      result += f'<content src="Text/part000{i - 3}.xhtml"/>\n'
-      result += '</navPoint>\n'
+      result += NavPoint(page, i).content
       i += 1
 
     return result
   
   #generar la estructura inicial de content.opf   
   def _gen_content(self):
-    with open('src/ebook_utils/assets/templates/content_example.opf', 'r') as f1:
-      with open('my_epub/OEBPS/content.opf', 'w') as f2:
-        for line in f1.readlines():
-          if 'Ingresar titulo aqui' in line:
-            f2.write(line.replace('Ingresar titulo aqui', self._meta['title']))
-
-          elif 'Ingresar autor aqui' in line:
-            f2.write(line.replace('Ingresar autor aqui', self._meta['author']))
-
-          elif 'Ingresar editorial aqui' in line:
-            f2.write(line.replace('Ingresar editorial aqui', self._meta['publisher']))
-
-          elif 'Ingresar codigo ISBN aqui' in line:
-            f2.write(line.replace('Ingresar codigo ISBN aqui', self._meta['ean']))
-
-          elif 'Ingresar textos de manifest aqui' in line:
-            f2.write(self._gen_manifest())
-
-          elif 'Ingresar contenido de spine aqui' in line:
-            f2.write(self._gen_spine())
-
-          else:
-            f2.write(line)
+    with open('my_epub/OEBPS/content.opf', 'w') as f:
+      f.write(CONTENT.format(self._meta['ean'], self._meta['title'], self._meta['author'], self._meta['publisher'],
+                             self._gen_manifest(), self._gen_spine()))
             
   #indexar los textos en manifest
   def _gen_manifest(self) -> str:
@@ -177,70 +180,25 @@ class Book:
   #generar la presentacion del libro y el toc
   def _gen_front_toc(self):
     #crear la frontpage
-    with open('src/ebook_utils/assets/templates/presentation_epub_example.xhtml', 'r') as f1:
-      with open('my_epub/OEBPS/Text/frontpage.xhtml', 'w') as f2:
-        for line in f1.readlines():
-          if 'Ingresar autor aqui' in line:
-            f2.write(line.replace('Ingresar autor aqui', self._meta['author']))
-
-          elif 'Ingresar titulo aqui' in line:
-            f2.write(line.replace('Ingresar titulo aqui', self._meta['title']))
-
-          elif 'Ingresar subtitulo aqui' in line and self._meta['subtitle'] != '':
-            f2.write(line.replace('Ingresar subtitulo aqui', self._meta['subtitle']))
-
-          elif 'Ingresar subtitulo aqui' in line and self._meta['subtitle'] == '':
-            continue
-          
-          elif 'Ingresar editorial aqui' in line and self._meta['publisher'] != '':
-            f2.write(line.replace('Ingresar editorial aqui', self._meta['publisher']))
-
-          elif 'Ingresar editorial aqui' in line and self._meta['publisher'] == '':
-            continue
-          
-          elif 'Ingresar email de la editorial aqui' in line and self._meta['email'] != '':
-            f2.write(line.replace('Ingresar email de la editorial aqui', self._meta['email']))
-
-          elif 'Ingresar email de la editorial aqui' in line and self._meta['email'] == '':
-            continue
-          
-          elif 'Ingresar codigo ISBN aqui' in line:
-            f2.write(line.replace('Ingresar codigo ISBN aqui', self._meta['ean']))
-
-          else:
-            f2.write(line)
-
+    with open('my_epub/OEBPS/Text/frontpage.xhtml', 'w') as f:
+      f.write(FRONTPAGE.format(self._meta['title'], self._meta['author'], self._meta['subtitle'], self._meta['publisher'],
+                               '' if self._meta['email'] == '' else 'Contact: ',self._meta['email'], self._meta['ean'])) 
+                              
     #crear la toc
-    with open('src/ebook_utils/assets/templates/toc_epub_example.xhtml', 'r') as f1:
-      with open('my_epub/OEBPS/Text/contents.xhtml', 'w') as f2:
-        for line in f1.readlines():
-          if 'Ingresar capitulos aqui' in line:
-            for i in range(len(self._toc._pages)):
-              f2.write('<div class="sgc-toc-level-1 sgc-1">\n')
-              f2.write(f'<a href="part000{i}.xhtml">{self._toc[i].title}</a>\n')
-              f2.write('</div>\n')
+    with open('my_epub/OEBPS/Text/contents.xhtml', 'w') as f:
+      links = ''
+      
+      for i in range(len(self._toc._pages)):
+        links += TocLink(i, self._toc[i].title).content
+        
+      f.write(TOC.format(links))
 
-          else:
-            f2.write(line)
-  
   #generar los capitulos
   def _gen_chapters(self):
       i = 0
 
       for page in self._toc._pages:  
-        with open('src/ebook_utils/assets/templates/chapter_example.xhtml', 'r') as f1:
-          with open(f'my_epub/OEBPS/Text/part000{i}.xhtml', 'w') as f2:
-            for line in f1.readlines():
-              if 'Ingresar titulo aqui' in line:
-                f2.write(line.replace('Ingresar titulo aqui', self._meta['title']))
-
-              elif 'Ingresar nombre del capitulo' in line:
-                f2.write(line.replace('Ingresar nombre del capitulo', page.title))
-
-              elif 'Ingresar capitulo aqui' in line:
-                f2.write(f'<p>{page.content}</p>\n')
-
-              else:
-                f2.write(line)
-
-            i += 1
+        with open(f'my_epub/OEBPS/Text/part000{i}.xhtml', 'w') as f:
+          f.write(CHAPTER.format(self._meta['title'], page.title, page.content))
+          
+        i += 1

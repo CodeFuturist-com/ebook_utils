@@ -1,11 +1,11 @@
-import re
+import os
 import pandas as pd
+import re
 import shutil
 import zipfile
-import os
 
-from epubcheck import EpubCheck
 from babel import Locale
+from epubcheck import EpubCheck
 
 def map_column_names(df, column_mapping):
     inverse_mapping = {variant.lower(): standard for standard, variants in column_mapping.items() for variant in variants}

@@ -1,4 +1,4 @@
-*{
+content = """*{
   padding: 0;
   margin: 0;
 }
@@ -14,6 +14,11 @@ p{
 .title{
   padding-left: 80px;
   font-size: 50px;
+}
+
+.subtitle{
+  padding-left: 80px;
+  margin-top: 5px;
 }
 
 .author{
@@ -32,4 +37,4 @@ p{
 .ISBN_code{
   padding-top: 10px;
   color: slategray;
-}
+}"""
