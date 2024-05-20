@@ -4,16 +4,14 @@ from templates import *
 from utils import create_folder, compress, rem_dir, check_epub
 
 class BookMeta:
-    def __init__(self, title: str, author: str, ean: str, no_request_data={}) -> None:
-        #desestructurar los valores no requeridos
-        #no_request_data.keys(): publisher_name, publisher_email, subtitle, date_epub
+    def __init__(self, title: str, author: str, ean: str, subtitle='', publisher='', email=''):
         self._meta = {
             'title': title,
             'author': author,
             'ean': ean,
-            'subtitle': '' if not 'subtitle' in no_request_data.keys() else no_request_data['subtitle'],
-            'publisher': '' if not 'publisher_name' in no_request_data.keys() else no_request_data['publisher_name'],
-            'email': '' if not 'publisher_email' in no_request_data.keys() else no_request_data['publisher_email']
+            'subtitle': subtitle,
+            'publisher': publisher,
+            'email': email
         }
 
     def __getitem__(self, key):
