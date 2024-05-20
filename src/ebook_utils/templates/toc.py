@@ -5,6 +5,6 @@ content = """<?xml version="1.0" encoding="utf-8"?><!DOCTYPE html PUBLIC "-//W3C
   </head>
   <body>
     <h1 id="Contents">Table of Contents</h1><hr/>
-    <!--Ingresar capitulos aqui-->
+    {0}
   </body>
 </html>"""
