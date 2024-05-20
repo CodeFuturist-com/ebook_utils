@@ -19,6 +19,7 @@ p{
 .subtitle{
   padding-left: 80px;
   margin-top: 5px;
+  font-size: 30px;
 }
 
 .author{
