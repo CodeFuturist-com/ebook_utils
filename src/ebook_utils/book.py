@@ -37,7 +37,7 @@ class BookToc:
 
         for item in contents:
             # If the type is BookToc add it to tocs list
-            if type(item) is self.__class__:
+            if isinstance(item, self.__class__):
                 tocs.append(item)
             else:
                 pages.append(item)
