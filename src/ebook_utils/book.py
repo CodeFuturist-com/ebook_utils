@@ -31,11 +31,34 @@ class BookChapter:
         return self._content
 
 class BookToc:
-    def __init__(self, pages: list[BookChapter]) -> None:
-        self._pages = pages
+    def __init__(self, contents: list) -> None:
+        pages = []
+        tocs = []
 
-    def __getitem__(self, key):
-        return self._pages[key]
+        for item in contents:
+            # If the type is BookToc add it to tocs list
+            if type(item) is self.__class__:
+                tocs.append(item)
+            else:
+                pages.append(item)
+           
+        self._pages = pages
+        self._tocs = tocs
+
+    # TODO: Implement the book parsing here
+    @classmethod
+    def from_book(cls, book):
+       contents = []
+       return cls(contents)       
+
+    # Returns the plain page list of toc recursively
+    @property
+    def pages(self):
+       return [x.pages for x in self._tocs].extend(self._pages)
+
+    @property
+    def tocs(self):
+        return self._tocs
 
 #objeto para manejar los navpoints de toc.ncx
 class NavPoint:
@@ -130,6 +153,7 @@ class Book:
     result = ''
     i = 3
 
+    # TODO: esto hay que cambiarlo a la nueva estructura recursiva de BookToc
     for page in self._toc._pages:
       result += NavPoint(page, i).content
       i += 1
@@ -165,6 +189,7 @@ class Book:
     result += '<itemref idref="frontpage.xhtml"/>\n'
     result += '<itemref idref="contents.xhtml"/>\n'
 
+    # TODO: adaptarlo a la nueva estructura recursiva de BookToc
     for i in range(len(self._toc._pages)):
       result += f'<itemref idref="section{i}.xhtml"/>\n'
 
@@ -186,6 +211,7 @@ class Book:
     with open('my_epub/OEBPS/Text/contents.xhtml', 'w') as f:
       links = ''
       
+      # TODO: adaptarlo a la nueva estructura recursiva de BookToc
       for i in range(len(self._toc._pages)):
         links += TocLink(i, self._toc[i].title).content
         
