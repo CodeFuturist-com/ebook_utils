@@ -54,7 +54,9 @@ class BookToc:
     # Returns the plain page list of toc recursively
     @property
     def pages(self):
-       return [x.pages for x in self._tocs].extend(self._pages)
+        page_list = [x.pages for x in self._tocs]
+        page_list.extend(self._pages)        
+        return page_list
 
     @property
     def tocs(self):
