@@ -2,4 +2,6 @@
 build
 dist
 __pycache__
+src/ebook_utils/parse_epub/assets
+src/ebook_utils/parse_epub/parse
 venv
