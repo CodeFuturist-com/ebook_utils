@@ -5,24 +5,24 @@ from utils import find_root_folder, parse_toc, unzip, rem_dir, epub_id, p_conten
 #dado un epub, parsear el contenido
 def content(epub: str) -> dict:
   unzip(epub) #descomprimir el epub
-  result = content_rec(epub, {}) #respuesta
-  rem_dir(f"{epub.replace('.epub', '')}") #borrar el descomprimido luego de la extraccion  
+  absolute_toc = dir_toc(epub) #guardar la direccion de la toc del epub
+  result = content_rec(epub, {}, absolute_toc, absolute_toc) #respuesta
+  rem_dir(f"{epub.replace('.epub', '')}") #borrar el descomprimido luego del parsing
   return result
 
 #metodo recursivo para las collections
-def content_rec(epub: str, result: dict, link_path=None) -> dict:
-  path_toc = dir_toc(epub)
-  data_toc = child_text(epub, link_path, path_toc) #por cada titulo, el path de lo que apunta cada link
+def content_rec(epub: str, result: dict, absolute_toc: str, parents_tocs: str, link_path=None) -> dict:
+  data_toc = child_text(epub, link_path, absolute_toc, parents_tocs) #por cada titulo, el path de lo que apunta cada link
   values = list(data_toc.values()) #valores del diccionario para preguntar por el id siguiente
   i = 0 #inicializar el iterador
   
   for key in data_toc:
     with open(data_toc[key][0], 'r') as f:
-      doc = BeautifulSoup(f.read(), 'xml')
+      doc = BeautifulSoup(f, 'xml')
       
       #si tiene mas de un tag 'a' y no tiene tags 'p'
       if len(doc.find_all('a')) > 1 and doc.find('p') == None:
-        result[key] = content_rec(epub, {}, data_toc[key][0])
+        result[key] = content_rec(epub, {}, absolute_toc, f"{parents_tocs}|{data_toc[key][0].split('/')[-1]}", data_toc[key][0])
         
       #si hay 2 path iguales consecutivos, el title referencia a un id
       elif i < len(data_toc) - 1 and data_toc[key][0] == values[i + 1][0]:
@@ -43,7 +43,7 @@ def content_rec(epub: str, result: dict, link_path=None) -> dict:
   return result
   
 #guardar por cada title, la direccion de los capitulos
-def child_text(epub: str, toc, path_toc) -> dict:
+def child_text(epub: str, toc, path_toc: str, parents_tocs: str) -> dict:
   result = {} #respuesta
   root_folder = find_root_folder(f"{epub.replace('.epub', '')}") #carpeta raiz de los textos
   dir = f"{epub.replace('.epub', '')}/{root_folder}" #inicializar el directorio y la toc
@@ -60,11 +60,19 @@ def child_text(epub: str, toc, path_toc) -> dict:
    
   #obtener cada capitulo con el xhtml del texto
   with open(toc, 'r') as f:
-    doc = BeautifulSoup(f.read(), 'xml')
+    doc = BeautifulSoup(f, 'xml')
     links = [element for element in doc.body.findAll('a') if element.text != None]
   
     for tag in links:
-      if 'href' in tag.attrs and path_toc not in tag['href'] :
+      in_href = False
+      parents = parents_tocs.split('|')
+      
+      for element in parents:
+        if element in tag['href']:
+          in_href = True
+          break
+          
+      if 'href' in tag.attrs and not in_href:
         result[f'{tag.text}'] = epub_id(tag['href'], dir)
     
   return result
@@ -118,7 +126,7 @@ def guide_toc(epub: str) -> str:
   
   #capturar la etiqueta guide
   with open(dir, 'r') as f1:
-    doc = BeautifulSoup(f1.read(), 'xml')
+    doc = BeautifulSoup(f1, 'xml')
     
     try:
       result = doc.find('guide').find(type='toc')['href'].split('/')[-1]
@@ -148,7 +156,7 @@ def title_toc(epub: str) -> str:
   for file in os.listdir(dir):
     if '.xhtml' in file or '.html' in file:
       with open(f'{dir}/{file}', 'r') as f:
-        doc = BeautifulSoup(f.read(), 'xml')
+        doc = BeautifulSoup(f, 'xml')
         
         try:
           tilte_name = doc.find('title').string.lower().strip() 
@@ -165,7 +173,7 @@ def title_toc(epub: str) -> str:
 #dado el nombre del capitulo extraer el texto correspondiente
 def content_chapter(chapter: tuple[str, str], id_end=None) -> str:
   with open(chapter[0], 'r') as f:
-    doc = BeautifulSoup(f.read(), 'xml')
+    doc = BeautifulSoup(f, 'xml')
     
     if chapter[1] != None:
       return p_group(p_content(doc, doc.find(id=chapter[1]), id_end))
