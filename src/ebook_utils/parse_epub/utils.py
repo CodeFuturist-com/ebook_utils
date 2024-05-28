@@ -4,17 +4,18 @@ import shutil
 import zipfile
 from bs4 import BeautifulSoup
 
-root_folders = [
-  'OEBPS',
-  'OPS'
-]
-
-def find_root_folder(directory):
-  for item in os.listdir(directory):
-    if item in root_folders:
-      return item
-  return ''
-
+#encontrar la carpeta raiz de os textos
+def find_root_folder(directory: str):
+  meta = ''
+  
+  for folder in os.listdir(directory):
+    if folder.lower() == 'meta-inf':
+      meta = folder
+      
+  with open(f'{directory}/{meta}/container.xml', 'r') as f:
+    doc = BeautifulSoup(f, 'xml')
+    return doc.find('rootfile')['full-path'].split('/')[0]
+      
 #descomprimir un archivo
 def unzip(file_name: str):
   extension = f".{file_name.split('.')[1]}"
