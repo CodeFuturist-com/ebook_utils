@@ -1,10 +1,16 @@
+import os
 from extract import content
 from utils import create_folder, reset_folder
 
-data = content('src/ebook_utils/parse_epub/assets/collections/collection1.epub')
-reset_folder('src/ebook_utils/parse_epub/parse')
+rel_path = os.path.dirname(os.path.abspath(__file__))
 
-def print_data(data: dict, path='src/ebook_utils/parse_epub/parse'):
+content_path = os.path.join(rel_path, "assets")
+res_path = os.path.join(rel_path, "parse")
+
+data = content(os.path.join(content_path, '9788026877301.epub'))
+reset_folder(res_path)
+
+def print_data(data: dict, path=res_path):
   for key in data:
     if type(data[key]) != dict:
       with open(f'{path}/{key}', 'w') as f:
