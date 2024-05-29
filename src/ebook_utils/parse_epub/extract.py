@@ -68,7 +68,7 @@ def child_text(epub: str, toc, path_toc: str, parents_tocs: str) -> dict:
       parents = parents_tocs.split('|')
       
       for element in parents:
-        if element in tag['href']:
+        if element in tag.get('href', ''):
           in_href = True
           break
           
