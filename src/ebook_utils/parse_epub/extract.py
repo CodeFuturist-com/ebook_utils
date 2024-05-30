@@ -22,7 +22,10 @@ def content_rec(epub: str, result: dict, absolute_toc: str, parents_tocs: str, l
       
       #si tiene mas de un tag 'a' y no tiene tags 'p'
       if len(doc.find_all('a')) > 1 and doc.find('p') == None:
-        result[key] = content_rec(epub, {}, absolute_toc, f"{parents_tocs}|{data_toc[key][0].split('/')[-1]}", data_toc[key][0])
+        content = content_rec(epub, {}, absolute_toc, f"{parents_tocs}|{data_toc[key][0].split('/')[-1]}", data_toc[key][0])
+        
+        if len(content) != 0:
+          result[key] = content
         
       #si hay 2 path iguales consecutivos, el title referencia a un id
       elif i < len(data_toc) - 1 and data_toc[key][0] == values[i + 1][0]:
@@ -61,18 +64,18 @@ def child_text(epub: str, toc, path_toc: str, parents_tocs: str) -> dict:
   #obtener cada capitulo con el xhtml del texto
   with open(toc, 'r') as f:
     doc = BeautifulSoup(f, 'xml')
-    links = [element for element in doc.body.findAll('a') if element.text != None]
+    links = [element for element in doc.body.findAll('a') if element.text != None and 'href' in element.attrs]
+    parents = parents_tocs.split('|')
   
     for tag in links:
       in_href = False
-      parents = parents_tocs.split('|')
       
       for element in parents:
-        if element in tag.get('href', ''):
+        if element in tag['href']:
           in_href = True
           break
           
-      if 'href' in tag.attrs and not in_href:
+      if not in_href:
         result[f'{tag.text}'] = epub_id(tag['href'], dir)
     
   return result
