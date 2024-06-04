@@ -9,4 +9,9 @@ from utils import rem_dir
 #book = Book(pages, meta)
 #print(book.export())
 
+#PARSE_BOOK
+#rel_path = os.path.dirname(os.path.abspath(__file__))
+#content_path = os.path.join(rel_path, "assets")
+#data = BookToc.from_book(os.path.join(content_path, 'collections/collection1.epub'))
+#print(data)
 
