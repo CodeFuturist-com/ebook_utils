@@ -32,6 +32,9 @@ class BookChapter:
     @property
     def content(self) -> str:
         return self._content
+    
+    def __str__(self) -> str:
+        return self.title
 
 class BookToc:
     def __init__(self, title: str, contents: list) -> None:
@@ -153,9 +156,9 @@ class BookToc:
     @property
     def pages(self):
         page_list = []
-        page_list.extend(x.pages for x in self._tocs)
-        page_list.extend(self._pages)        
-        return page_list
+        for x in self._tocs:
+          page_list = page_list + x.pages
+        return page_list + self._pages
     
     @property
     def title(self):
@@ -164,6 +167,9 @@ class BookToc:
     @property
     def tocs(self):
         return self._tocs
+    
+    def __str__(self) -> str:
+       return f"{self.title}"
 
 #objeto para manejar los navpoints de toc.ncx
 class NavPoint:
