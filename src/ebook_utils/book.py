@@ -6,31 +6,6 @@ from templates import *
 #metodos auxiliares
 from utils import create_folder, compress, rem_dir, check_epub, unzip, dir_toc, p_group, p_content, find_root_folder, epub_id
 
-#devolver un 'BookMeta' con la metadata de un epub
-def meta(epub: str):
-  metadata_info: dict = {}  #estructura donde se almacenara la data
-  tags = ['title', 'creator', 'identifier', 'publisher', 'subtitle', 'email'] #tags de la metadata en content
-  
-  #armar el directorio
-  root_folder = find_root_folder(f"{epub.replace('.epub', '')}")
-  dir = f"{epub.replace('.epub', '')}/{root_folder}"
-    
-  for file in os.listdir(dir):
-    if '.opf' in file:
-      dir += f'/{file}'
-      break
-  
-  with open(dir, 'r') as f:
-    doc = BeautifulSoup(f.read(), 'xml')
-    
-    #si el tag esta en la metadata del libro devuelve su contenido
-    for tag in tags:
-      tag_value = doc.find(f'dc:{tag}')
-      metadata_info[tag] = tag_value.string.replace('&', '&amp') if tag_value != None else ''
-        
-  return BookMeta(metadata_info['title'], metadata_info['creator'], metadata_info['identifier'],
-                  metadata_info['subtitle'], metadata_info['publisher'], metadata_info['email'])
-
 def _child_text(epub: str, toc, path_toc: str, parents_tocs: str) -> dict:
       result = {} #respuesta
       root_folder = find_root_folder(f"{epub.replace('.epub', '')}") #carpeta raiz de los textos
@@ -141,6 +116,31 @@ class BookMeta:
 
     def __getitem__(self, key):
         return self._meta[key]
+    
+    @classmethod
+    def from_book(cls, book):
+        metadata_info: dict = {}  #estructura donde se almacenara la data
+        tags = ['title', 'creator', 'identifier', 'publisher', 'subtitle', 'email'] #tags de la metadata en content
+        
+        #armar el directorio
+        root_folder = find_root_folder(f"{book.replace('.epub', '')}")
+        dir = f"{book.replace('.epub', '')}/{root_folder}"
+          
+        for file in os.listdir(dir):
+            if '.opf' in file:
+                dir += f'/{file}'
+                break
+        
+        with open(dir, 'r') as f:
+            doc = BeautifulSoup(f.read(), 'xml')
+          
+            #si el tag esta en la metadata del libro devuelve su contenido
+            for tag in tags:
+                tag_value = doc.find(f'dc:{tag}')
+                metadata_info[tag] = tag_value.string.replace('&', '&amp;') if tag_value != None else ''
+              
+        return cls(metadata_info['title'], metadata_info['creator'], metadata_info['identifier'],
+                        metadata_info['subtitle'], metadata_info['publisher'], metadata_info['email'])
 
 class BookChapter:
     def __init__(self, title: str, content: str) -> None:
