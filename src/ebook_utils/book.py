@@ -56,9 +56,9 @@ class BookToc:
     @property
     def pages(self):
         page_list = []
-        page_list.extend(x.pages for x in self._tocs)
-        page_list.extend(self._pages)        
-        return page_list
+        for x in self._tocs:
+          page_list = page_list + x.pages
+        return page_list + self._pages
     
     @property
     def title(self):
