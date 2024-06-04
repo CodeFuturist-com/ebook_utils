@@ -206,7 +206,7 @@ class BookToc:
                     else:
                         l_index = page.generate(meta, l_index + 1)
                     
-                f.write(NESTED_TOC.format(page.title, links))
+                f.write(NESTED_TOC.format(self.title, links))
         return l_index
 
 #objeto para manejar los navpoints de toc.ncx
