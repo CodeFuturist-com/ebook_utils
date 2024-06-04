@@ -72,6 +72,10 @@ def _content_chapter(chapter: tuple[str, str], id_end=None) -> str:
         #si es 'None' significa que se referencia a un id
         if chapter[1] != None:
           return p_group(p_content(doc, doc.find(id=chapter[1]), id_end))
+        
+        #si es 'None' pero tiene limite significa que abarca todo el body hasta el limite
+        if chapter[1] == None and id_end != None:
+          return p_group(p_content(doc, doc.body, id_end))
 
         #dame todos los 'p' del directorio
         return p_group(p_content(doc))
