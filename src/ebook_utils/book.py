@@ -31,7 +31,8 @@ class BookChapter:
         return self._content
 
 class BookToc:
-    def __init__(self, contents: list) -> None:
+    def __init__(self, title: str, contents: list) -> None:
+        self._title = title
         pages = []
         tocs = []
 
@@ -54,9 +55,14 @@ class BookToc:
     # Returns the plain page list of toc recursively
     @property
     def pages(self):
-        page_list = [x.pages for x in self._tocs]
+        page_list = []
+        page_list.extend(x.pages for x in self._tocs)
         page_list.extend(self._pages)        
         return page_list
+    
+    @property
+    def title(self):
+       return self._title
 
     @property
     def tocs(self):
