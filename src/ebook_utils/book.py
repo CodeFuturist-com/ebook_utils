@@ -29,6 +29,9 @@ class BookChapter:
     @property
     def content(self) -> str:
         return self._content
+    
+    def __str__(self) -> str:
+        return self.title
 
 class BookToc:
     def __init__(self, title: str, contents: list) -> None:
@@ -67,6 +70,9 @@ class BookToc:
     @property
     def tocs(self):
         return self._tocs
+    
+    def __str__(self) -> str:
+       return f"{self.title}"
 
 #objeto para manejar los navpoints de toc.ncx
 class NavPoint:
