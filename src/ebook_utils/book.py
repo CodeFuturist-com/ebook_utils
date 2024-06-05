@@ -144,6 +144,34 @@ class BookMeta:
 
     def __getitem__(self, key):
         return self._meta[key]
+    
+    @classmethod
+    def from_book(cls, book):
+        metadata_info: dict = {}  #estructura donde se almacenara la data
+        tags = ['title', 'creator', 'identifier', 'publisher', 'subtitle', 'email'] #tags de la metadata en content
+        
+        unzip(book)
+        #armar el directorio
+        root_folder = find_root_folder(f"{book.replace('.epub', '')}")
+        dir = f"{book.replace('.epub', '')}/{root_folder}"
+        
+        for file in os.listdir(dir):
+            if '.opf' in file:
+                dir += f'/{file}'
+                break
+        
+        with open(dir, 'r') as f:
+            doc = BeautifulSoup(f.read(), 'xml')
+          
+            #si el tag esta en la metadata del libro devuelve su contenido
+            for tag in tags:
+                tag_value = doc.find(f'dc:{tag}')
+                metadata_info[tag] = tag_value.string.replace('&', '&amp;') if tag_value != None else ''
+        
+        rem_dir([f"{book.replace('.epub', '')}"]) 
+              
+        return cls(metadata_info['title'], metadata_info['creator'], metadata_info['identifier'],
+                        metadata_info['subtitle'], metadata_info['publisher'], metadata_info['email'])
 
 class BookChapter:
     def __init__(self, title: str, content: str) -> None:
@@ -177,9 +205,9 @@ class BookToc:
         self._contents = contents
 
     @classmethod
-    def from_book(cls, book):
+    def from_book(cls, title: str, book: str):
       contents = _content(book)
-      return cls('Sex', contents)   
+      return cls(title, contents)   
     
 
     # Returns the plain page list of toc recursively
@@ -280,111 +308,117 @@ class TocLink:
     return self._gen_content()
 
 class Book:
-  def __init__(self, toc: BookToc, meta: BookMeta) -> None:
-      self._meta = meta
-      self._toc = toc
+    def __init__(self, toc: BookToc, meta: BookMeta) -> None:
+        self._meta = meta
+        self._toc = toc
 
-  def export(self) -> str:
-    #estructura fija
-    self._gen_static_structure()
-    
-    #estructura variable
-    self._gen_text()
-    self._gen_toc_ncx()
-    self._gen_content()
-  
-    #comprimir el epub, borrar el descomprimido y chequear el epub
-    compress('my_epub', self._meta['ean'], '.epub')
-    rem_dir(['my_epub'])
-    check_epub(f'{self._meta["ean"]}.epub')
-    
-    #devolver la ruta
-    return f"{self._meta['ean']}.epub "
-      
-  #crear la estructura inicial que no varia en ningun epub  
-  def _gen_static_structure(self):
-    #carpetas iniciales
-    create_folder('my_epub')
-    create_folder('my_epub/META-INF')
-    create_folder('my_epub/OEBPS')
-    create_folder('my_epub/OEBPS/Images')
-    create_folder('my_epub/OEBPS/Styles')
-    create_folder('my_epub/OEBPS/Text')
-  
-    #styles
-    with open('my_epub/OEBPS/Styles/frontpage.css', 'w') as f1:
-      f1.write(FRONTPAGE_STYLES)
+    @classmethod
+    def from_book(cls, book):
+       meta = BookMeta.from_book(book)
+       toc = BookToc.from_book(meta['title'], book)
+       return cls(toc, meta)
+
+    def export(self) -> str:
+        #estructura fija
+        self._gen_static_structure()
         
-    #mimetype
-    with open('my_epub/mimetype', 'w') as f:
-      f.write('application/epub+zip')
-      
-    #container.xml
-    with open('my_epub/META-INF/container.xml', 'w') as f1:
-      f1.write(CONTAINERT_XML)
-        
-  #generar el toc.ncx     
-  def _gen_toc_ncx(self):
-    with open('my_epub/OEBPS/toc.ncx', 'w') as f1:
-      f1.write(NCX.format(self._meta['ean'], self._meta['title'], self._gen_navPoint()))
-            
-  #generar los navPoints
-  def _gen_navPoint(self) -> str:
-    result = ''
-    i = 3
-
-    for page in self._toc.pages:
-      result += NavPoint(page, i).content
-      i += 1
-
-    return result
-  
-  #generar la estructura inicial de content.opf   
-  def _gen_content(self):
-    with open('my_epub/OEBPS/content.opf', 'w') as f:
-      f.write(CONTENT.format(self._meta['ean'], self._meta['title'], self._meta['author'], self._meta['publisher'],
-                             self._gen_manifest(), self._gen_spine()))
-            
-  #indexar los textos en manifest
-  def _gen_manifest(self) -> str:
-    result = ''
-
-    #agregar las referencias a la fontpage y a la toc en manifest 
-    result += '<item id="frontpage.xhtml" href="Text/frontpage.xhtml" media-type="application/xhtml+xml"/>\n'
-    result += '<item id="contents.xhtml" href="Text/contents.xhtml" media-type="application/xhtml+xml"/>\n'
-
-    for i in range(1, len(self._toc.pages) + self._toc.tocs_count):
-      result += f'<item id="section{i}.xhtml" href="Text/part000{i}.xhtml" media-type="application/xhtml+xml"/>\n'
-
-    #agregar la referencia al css
-    result += '<item id="frontpage.css" href="Styles/frontpage.css" media-type="text/css"/>\n'
-    return result
-  
-  #generar el contenido de spine
-  def _gen_spine(self) -> str:
-    result = ''
-
-    #agregar las referencias a la fontpage y a la toc en manifest 
-    result += '<itemref idref="frontpage.xhtml"/>\n'
-    result += '<itemref idref="contents.xhtml"/>\n'
-
-    for i in range(1, len(self._toc.pages) + self._toc.tocs_count):
-      result += f'<itemref idref="section{i}.xhtml"/>\n'
-
-    return result
-  
-  #generar carpeta text
-  def _gen_text(self):
-    self._toc.generate(self._meta, 0, True)
-    self._gen_front_toc()
-    # self._gen_chapters()
+        #estructura variable
+        self._gen_text()
+        self._gen_toc_ncx()
+        self._gen_content()
     
-  #generar la presentacion del libro y el toc
-  def _gen_front_toc(self):
-    #crear la frontpage
-    with open('my_epub/OEBPS/Text/frontpage.xhtml', 'w') as f:
-      f.write(FRONTPAGE.format(self._meta['title'], self._meta['author'], self._meta['subtitle'], self._meta['publisher'],
-                               '' if self._meta['email'] == '' else 'Contact: ',self._meta['email'], self._meta['ean'])) 
-                              
-    #crear la toc
+        #comprimir el epub, borrar el descomprimido y chequear el epub
+        compress('my_epub', self._meta['ean'], '.epub')
+        rem_dir(['my_epub'])
+        check_epub(f'{self._meta["ean"]}.epub')
+        
+        #devolver la ruta
+        return f"{self._meta['ean']}.epub "
+        
+    #crear la estructura inicial que no varia en ningun epub  
+    def _gen_static_structure(self):
+        #carpetas iniciales
+        create_folder('my_epub')
+        create_folder('my_epub/META-INF')
+        create_folder('my_epub/OEBPS')
+        create_folder('my_epub/OEBPS/Images')
+        create_folder('my_epub/OEBPS/Styles')
+        create_folder('my_epub/OEBPS/Text')
+    
+        #styles
+        with open('my_epub/OEBPS/Styles/frontpage.css', 'w') as f1:
+            f1.write(FRONTPAGE_STYLES)
+            
+        #mimetype
+        with open('my_epub/mimetype', 'w') as f:
+            f.write('application/epub+zip')
+        
+        #container.xml
+        with open('my_epub/META-INF/container.xml', 'w') as f1:
+            f1.write(CONTAINERT_XML)
+            
+    #generar el toc.ncx     
+    def _gen_toc_ncx(self):
+        with open('my_epub/OEBPS/toc.ncx', 'w') as f1:
+            f1.write(NCX.format(self._meta['ean'], self._meta['title'], self._gen_navPoint()))
+                
+    #generar los navPoints
+    def _gen_navPoint(self) -> str:
+        result = ''
+        i = 3
+
+        for page in self._toc.pages:
+            result += NavPoint(page, i).content
+            i += 1
+
+        return result
+    
+    #generar la estructura inicial de content.opf   
+    def _gen_content(self):
+        with open('my_epub/OEBPS/content.opf', 'w') as f:
+            f.write(CONTENT.format(self._meta['ean'], self._meta['title'], self._meta['author'], self._meta['publisher'],
+                                self._gen_manifest(), self._gen_spine()))
+                
+    #indexar los textos en manifest
+    def _gen_manifest(self) -> str:
+        result = ''
+
+        #agregar las referencias a la fontpage y a la toc en manifest 
+        result += '<item id="frontpage.xhtml" href="Text/frontpage.xhtml" media-type="application/xhtml+xml"/>\n'
+        result += '<item id="contents.xhtml" href="Text/contents.xhtml" media-type="application/xhtml+xml"/>\n'
+
+        for i in range(1, len(self._toc.pages) + self._toc.tocs_count):
+            result += f'<item id="section{i}.xhtml" href="Text/part000{i}.xhtml" media-type="application/xhtml+xml"/>\n'
+
+        #agregar la referencia al css
+        result += '<item id="frontpage.css" href="Styles/frontpage.css" media-type="text/css"/>\n'
+        return result
+    
+    #generar el contenido de spine
+    def _gen_spine(self) -> str:
+        result = ''
+
+        #agregar las referencias a la fontpage y a la toc en manifest 
+        result += '<itemref idref="frontpage.xhtml"/>\n'
+        result += '<itemref idref="contents.xhtml"/>\n'
+
+        for i in range(1, len(self._toc.pages) + self._toc.tocs_count):
+            result += f'<itemref idref="section{i}.xhtml"/>\n'
+
+        return result
+    
+    #generar carpeta text
+    def _gen_text(self):
+        self._toc.generate(self._meta, 0, True)
+        self._gen_front_toc()
+        # self._gen_chapters()
+        
+    #generar la presentacion del libro y el toc
+    def _gen_front_toc(self):
+        #crear la frontpage
+        with open('my_epub/OEBPS/Text/frontpage.xhtml', 'w') as f:
+            f.write(FRONTPAGE.format(self._meta['title'], self._meta['author'], self._meta['subtitle'], self._meta['publisher'],
+                                '' if self._meta['email'] == '' else 'Contact: ',self._meta['email'], self._meta['ean'])) 
+                                
+        #crear la toc
     
