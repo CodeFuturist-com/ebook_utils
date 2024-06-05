@@ -31,7 +31,7 @@ def meta(epub: str):
   return BookMeta(metadata_info['title'], metadata_info['creator'], metadata_info['identifier'],
                   metadata_info['subtitle'], metadata_info['publisher'], metadata_info['email'])
 
-def _child_text(epub: str, toc, path_toc: str, visited_links: str) -> dict:
+def _child_text(epub: str, toc, path_toc: str, visited_links: set) -> dict:
       result = {} #respuesta
       root_folder = find_root_folder(f"{epub.replace('.epub', '')}") #carpeta raiz de los textos
       dir = f"{epub.replace('.epub', '')}/{root_folder}" #inicializar el directorio y la toc
@@ -49,8 +49,8 @@ def _child_text(epub: str, toc, path_toc: str, visited_links: str) -> dict:
       #obtener cada capitulo con el xhtml del texto
       with open(toc, 'r') as f:
         doc = BeautifulSoup(f, 'xml')
-        #links = [element for element in doc.body.findAll('a') if element.text != None and 'href' in element.attrs]
         links = []
+        
         for element in doc.body.findAll('a'):
           if element.text != None and 'href' in element.attrs:
             if not in_links(links, element):
