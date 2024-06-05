@@ -238,3 +238,12 @@ def epub_id(epub: str, dir: str) -> tuple:
     return (f'{dir}/{epub}', None)
   
   return (f'{dir}/{split_data[0]}', split_data[1])
+
+#determinar si un elemento esta en una lista de link y sustituirlo
+def in_links(links: list, element) -> bool:
+  for i in range(len(links)):
+    if links[i]['href'] == element['href']:
+      links[i] = element
+      return True
+  
+  return False

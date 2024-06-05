@@ -12,6 +12,6 @@ from utils import rem_dir
 #PARSE_BOOK
 #rel_path = os.path.dirname(os.path.abspath(__file__))
 #content_path = os.path.join(rel_path, "assets")
-#data = BookToc.from_book(os.path.join(content_path, 'collections/collection1.epub'))
+#data = BookToc.from_book(os.path.join(content_path, '9788027244980.epub'))
 #print(data)
 
