@@ -186,6 +186,10 @@ class BookChapter:
     def content(self) -> str:
         return self._content
     
+    @content.setter
+    def content(self, value: str):
+       self._content = value.replace('&', '&amp;')
+    
     def __str__(self) -> str:
         return self.title
     
