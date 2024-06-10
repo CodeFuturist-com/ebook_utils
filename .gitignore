@@ -2,4 +2,5 @@
 build
 dist
 __pycache__
+src/ebook_utils/assets
 venv

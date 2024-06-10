@@ -3,6 +3,7 @@ import unittest
 import random
 
 from books_loader import BooksLoader
+from book import BookToc, BookChapter
 
 class TestBookLoader(unittest.TestCase):
     def test_load_from_csv(self):
@@ -20,6 +21,13 @@ class TestBookLoader(unittest.TestCase):
         loader = BooksLoader.from_xlsx(source)
 
         self.assertIsNot(len(loader.books), 0)
+
+class TestBookToc(unittest.TestCase):
+    def test_recursive_pages(self):
+        toc1 = BookToc('Inner', [BookChapter("Ch1", "Content"), BookChapter("Ch2", "Content")])
+        toc2 = BookToc("Outer", [toc1, BookChapter("Ch3", "Content")])
+
+        self.assertEqual(len(toc2.pages), 3)
 
 if __name__ == '__main__':
     unittest.main()
