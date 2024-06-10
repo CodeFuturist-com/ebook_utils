@@ -4,7 +4,7 @@ from bs4 import BeautifulSoup
 from templates import *
 
 #metodos auxiliares
-from utils import create_folder, compress, rem_dir, check_epub, unzip, dir_toc, p_group, p_content, find_root_folder, epub_id, in_links
+from utils import create_folder, compress, rem_dirs, check_epub, unzip, dir_toc, p_group, p_content, find_root_folder, epub_id, in_links
 
 #devolver un 'BookMeta' con la metadata de un epub
 def meta(epub: str):
@@ -124,7 +124,7 @@ def _content(epub: str) -> dict:
   aux = set()
   aux.add(absolute_toc)
   result = _content_rec(epub, [], absolute_toc, aux) #respuesta
-  rem_dir(f"{epub.replace('.epub', '')}") #borrar el descomprimido luego del parsing
+  rem_dirs([f"{epub.replace('.epub', '')}"]) #borrar el descomprimido luego del parsing
   return result
 
 def is_toc(page: any) -> bool:
@@ -168,7 +168,7 @@ class BookMeta:
                 tag_value = doc.find(f'dc:{tag}')
                 metadata_info[tag] = tag_value.string.replace('&', '&amp;') if tag_value != None else ''
         
-        rem_dir([f"{book.replace('.epub', '')}"]) 
+        rem_dirs([f"{book.replace('.epub', '')}"]) 
               
         return cls(metadata_info['title'], metadata_info['creator'], metadata_info['identifier'],
                         metadata_info['subtitle'], metadata_info['publisher'], metadata_info['email'])
@@ -329,7 +329,7 @@ class Book:
     
         #comprimir el epub, borrar el descomprimido y chequear el epub
         compress('my_epub', self._meta['ean'], '.epub')
-        rem_dir(['my_epub'])
+        rem_dirs(['my_epub'])
         check_epub(f'{self._meta["ean"]}.epub')
         
         #devolver la ruta

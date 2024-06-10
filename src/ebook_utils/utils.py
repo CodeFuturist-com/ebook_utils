@@ -54,7 +54,7 @@ def compress(current_folder, new_path: str, extension: str):
     pass
   
 #borrar folders
-def rem_dir(dir: list):
+def rem_dirs(dir: list):
   for d in dir:
     shutil.rmtree(d)
     # print('Succesful delete')
