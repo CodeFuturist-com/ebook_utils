@@ -1,7 +1,7 @@
 import os
 
 from book import Book, BookChapter, BookMeta, BookToc
-from utils import rem_dir
+from utils import rem_dirs
 
 #EXPORT
 #meta = BookMeta('ALL ABOUT SEX', 'Sr Sex', 'sex123',subtitle='Sex Edition', email='sex@gmail.com')
@@ -12,6 +12,6 @@ from utils import rem_dir
 #PARSE_BOOK
 #rel_path = os.path.dirname(os.path.abspath(__file__))
 #content_path = os.path.join(rel_path, "assets")
-#data = BookToc.from_book(os.path.join(content_path, '9788027244980.epub'))
+#data = BookToc.from_book('sex', os.path.join(content_path, 'epub_test1/epub16.epub'))
 #print(data)
 
