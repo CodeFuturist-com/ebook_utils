@@ -1,10 +1,10 @@
 import os
 
 from bs4 import BeautifulSoup
-from templates import *
+from ebook_utils.templates import *
 
 #metodos auxiliares
-from utils import create_folder, compress, rem_dirs, check_epub, unzip, dir_toc, p_group, p_content, find_root_folder, epub_id, in_links
+from ebook_utils.utils import create_folder, compress, rem_dirs, check_epub, unzip, dir_toc, p_group, p_content, find_root_folder, epub_id, in_links
 
 #devolver un 'BookMeta' con la metadata de un epub
 def meta(epub: str):
@@ -187,6 +187,10 @@ class BookChapter:
     @property
     def content(self) -> str:
         return self._content
+    
+    @content.setter
+    def content(self, value: str):
+       self._content = value.replace('&', '&amp;')
     
     def __str__(self) -> str:
         return self.title
