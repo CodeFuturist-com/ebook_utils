@@ -50,6 +50,7 @@ def _child_text(epub: str, toc, path_toc: str, visited_links: set) -> dict:
       with open(toc, 'r') as f:
         doc = BeautifulSoup(f, 'xml')
         links = []
+        i = 1 #enumerador de elementos para trabajar con llaves repetidas
         
         for element in doc.body.findAll('a'):
           if element.text != None and 'href' in element.attrs:
@@ -60,7 +61,8 @@ def _child_text(epub: str, toc, path_toc: str, visited_links: set) -> dict:
           if tag['href'].split('/')[-1] in visited_links:
             continue
           
-          result[f'{tag.text}'] = epub_id(tag['href'], dir)
+          result[f'{i}.{tag.text}'] = epub_id(tag['href'], dir)
+          i += 1
 
       return result
 
@@ -94,7 +96,7 @@ def _content_rec(epub: str, result: list, absolute_toc: str, visited_links: set,
             content = _content_rec(epub, [], absolute_toc, visited_links, data_toc[key][0])
 
             if len(content) != 0:
-              result.append(BookToc(key, content))
+              result.append(BookToc(key[2:], content))
 
           #si hay 2 path iguales consecutivos, el title referencia a un id
           elif i < len(data_toc) - 1 and data_toc[key][0] == values[i + 1][0]:
@@ -103,7 +105,7 @@ def _content_rec(epub: str, result: list, absolute_toc: str, visited_links: set,
             visited_links.add(value_visit)
             
             if content != '':
-              result.append(BookChapter(key, content))
+              result.append(BookChapter(key[2:], content))
 
           #en cualquier oto caso, dame todos los p
           else:
@@ -112,7 +114,7 @@ def _content_rec(epub: str, result: list, absolute_toc: str, visited_links: set,
             visited_links.add(value_visit)
 
             if content != '':
-              result.append(BookChapter(key, content))
+              result.append(BookChapter(key[2:], content))
 
         i += 1
 
