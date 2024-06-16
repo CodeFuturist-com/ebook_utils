@@ -70,7 +70,7 @@ def _content_chapter(chapter: tuple[str, str], id_end=None) -> str:
       with open(chapter[0], 'r') as f:
         doc = BeautifulSoup(f, 'xml')
 
-        #si es 'None' significa que se referencia a un id
+        #si no es 'None' significa que se referencia a un id
         if chapter[1] != None:
           return p_group(p_content(doc, doc.find(id=chapter[1]), id_end))
         
