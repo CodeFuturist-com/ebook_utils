@@ -252,5 +252,5 @@ def in_links(links: list, element) -> bool:
 #parsear el titulo de los BookChapter
 def parse_title(title: str) -> str:
   for i in range(len(title)):
-    if i == '.':
+    if title[i] == '.':
       return title[i + 1:]
