@@ -4,7 +4,7 @@ from bs4 import BeautifulSoup
 from ebook_utils.templates import *
 
 #metodos auxiliares
-from ebook_utils.utils import create_folder, compress, rem_dirs, check_epub, unzip, dir_toc, p_group, p_content, find_root_folder, epub_id, in_links
+from ebook_utils.utils import create_folder, compress, rem_dirs, check_epub, unzip, dir_toc, p_group, p_content, find_root_folder, epub_id, in_links, parse_title
 
 #devolver un 'BookMeta' con la metadata de un epub
 def meta(epub: str):
@@ -96,7 +96,7 @@ def _content_rec(epub: str, result: list, absolute_toc: str, visited_links: set,
             content = _content_rec(epub, [], absolute_toc, visited_links, data_toc[key][0])
 
             if len(content) != 0:
-              result.append(BookToc(key[2:], content))
+              result.append(BookToc(parse_title(key), content))
 
           #si hay 2 path iguales consecutivos, el title referencia a un id
           elif i < len(data_toc) - 1 and data_toc[key][0] == values[i + 1][0]:
@@ -105,7 +105,7 @@ def _content_rec(epub: str, result: list, absolute_toc: str, visited_links: set,
             visited_links.add(value_visit)
             
             if content != '':
-              result.append(BookChapter(key[2:], content))
+              result.append(BookChapter(parse_title(key), content))
 
           #en cualquier oto caso, dame todos los p
           else:
@@ -114,7 +114,7 @@ def _content_rec(epub: str, result: list, absolute_toc: str, visited_links: set,
             visited_links.add(value_visit)
 
             if content != '':
-              result.append(BookChapter(key[2:], content))
+              result.append(BookChapter(parse_title(key), content))
 
         i += 1
 
