@@ -253,4 +253,4 @@ def in_links(links: list, element) -> bool:
 def parse_title(title: str) -> str:
   for i in range(len(title)):
     if i == '.':
-      return title[i:]
+      return title[i + 1:]
