@@ -198,10 +198,11 @@ def find_root_folder(directory: str):
 #returnar los 'p' entre 2 tags 
 def p_content(doc: BeautifulSoup, tag_start=None, id_end=None):
   result = []
-  flag_tag = False
   
   if tag_start == None:
     return doc.body.find_all('p')
+  
+  flag_tag = False if tag_start.name != 'body' else True #si el tag inicial es 'body' dame los 'p' de body sin verificar
   
   for element in doc.body.find_all():
     if flag_tag and element.name == 'p':
@@ -247,3 +248,9 @@ def in_links(links: list, element) -> bool:
       return True
   
   return False
+
+#parsear el titulo de los BookChapter
+def parse_title(title: str) -> str:
+  for i in range(len(title)):
+    if title[i] == '.':
+      return title[i + 1:]
