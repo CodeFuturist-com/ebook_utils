@@ -245,3 +245,15 @@ def parse_title(title: str) -> str:
   for i in range(len(title)):
     if title[i] == '.':
       return title[i + 1:]
+ 
+#encontrar la carpeta raiz de los textos   
+def dir_text(epub: str) -> str:
+  root_folder = find_root_folder(f"{epub.replace('.epub', '')}") #carpeta raiz de los textos
+  dir = f"{epub.replace('.epub', '')}/{root_folder}" #inicializar el directorio y la toc
+
+  #construir el directorio
+  for file in os.listdir(dir):
+     if file.lower() == 'text':
+       dir += f'/{file}'
+       return dir
+    
