@@ -323,6 +323,31 @@ class Book:
        meta = BookMeta.from_book(book)
        toc = BookToc.from_book(meta['title'], book)
        return cls(toc, meta)
+    
+    @property
+    def title(self):
+        return self._meta['title']
+
+    @property
+    def subtitle(self):
+        return self._meta['subtitle']
+    
+    @property
+    def author(self):
+        return self._meta['author']
+    
+    @property
+    def chapters(self):
+        return self._get_chapters(self._toc)
+
+    def _get_chapters(self, toc):
+        chapters = []
+        for item in toc.pages:
+            if isinstance(item, BookChapter):
+                chapters.append(item)
+            elif isinstance(item, BookToc):
+                chapters.extend(self._get_chapters(item))
+        return chapters
 
     def export(self) -> str:
         #estructura fija
