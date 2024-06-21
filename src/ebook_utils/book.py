@@ -4,7 +4,7 @@ from bs4 import BeautifulSoup
 from ebook_utils.templates import *
 
 #metodos auxiliares
-from ebook_utils.utils import create_folder, compress, rem_dirs, check_epub, unzip, dir_toc, p_group, p_content, find_root_folder, epub_id, parse_title
+from ebook_utils.utils import create_folder, compress, rem_dirs, check_epub, unzip, dir_toc, p_group, p_content, find_root_folder, epub_id, parse_title, dir_text
 
 #devolver un 'BookMeta' con la metadata de un epub
 def meta(epub: str):
@@ -33,14 +33,7 @@ def meta(epub: str):
 
 def _child_text(epub: str, toc, path_toc: str, visited_tocs: set) -> dict:
       result = {} #respuesta
-      root_folder = find_root_folder(f"{epub.replace('.epub', '')}") #carpeta raiz de los textos
-      dir = f"{epub.replace('.epub', '')}/{root_folder}" #inicializar el directorio y la toc
-
-      #construir el directorio
-      for file in os.listdir(dir):
-         if file.lower() == 'text':
-           dir += f'/{file}'
-           break
+      dir = dir_text(epub)
          
       #crear el toc
       if toc == None:
@@ -90,8 +83,8 @@ def _content_rec(epub: str, result: list, absolute_toc: str, visited_tocs: set, 
           doc = BeautifulSoup(f, 'xml')
 
           #si tiene mas de un tag 'a' y no tiene tags 'p' es una toc o todos los tags 'p' estan vacios
-          if len(doc.find_all('a')) > 1 and (doc.find('p') == None or len(list(filter(lambda x: x.text.strip() != '', doc.find_all('p')))) == 0):
-            href = f"{data_toc[key][0].split('/')[-1]}#{data_toc[key][1]}" if data_toc[key][1] != None else f"{data_toc[key][0].split('/')[-1]}"
+          if len(doc.find_all('a')) > 1 and ((doc.find(class_='sgc-toc-level') != None or doc.find(class_='sgc-toc-level-1') != None) or (doc.find('p') == None or len(list(filter(lambda x: x.text.strip() != '', doc.find_all('p')))) == 0)):
+            href = f"{data_toc[key][0].split('/')[-1]}"
             content = []
         
             if not href in visited_tocs:
@@ -119,18 +112,19 @@ def _content_rec(epub: str, result: list, absolute_toc: str, visited_tocs: set, 
 
       return result
 
-def _content(epub: str) -> dict:
+def _content(epub: str) -> list:
   unzip(epub) #descomprimir el epub
   absolute_toc = dir_toc(epub) #guardar la direccion de la toc del epub
-  aux = set()
-  aux.add(absolute_toc)
-  result = _content_rec(epub, [], absolute_toc, aux) #respuesta
+  visited_tocs = set()
+  visited_tocs.add(absolute_toc)
+  result = _content_rec(epub, [], absolute_toc, visited_tocs) #respuesta
   rem_dirs([f"{epub.replace('.epub', '')}"]) #borrar el descomprimido luego del parsing
   return result
 
 def is_toc(page: any) -> bool:
     if isinstance(page, BookToc): return True
     return False
+
 
 class BookMeta:
     def __init__(self, title: str, author: str, ean: str, subtitle='', publisher='', email=''):
