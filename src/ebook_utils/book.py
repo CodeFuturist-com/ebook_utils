@@ -31,13 +31,12 @@ def meta(epub: str):
   return BookMeta(metadata_info['title'], metadata_info['creator'], metadata_info['identifier'],
                   metadata_info['subtitle'], metadata_info['publisher'], metadata_info['email'])
 
-def _child_text(epub: str, toc, path_toc: str, visited_tocs: set) -> dict:
+def _child_text(epub: str, toc: str, parent_tocs: set) -> dict:
       result = {} #respuesta
       dir = dir_text(epub)
          
       #crear el toc
-      if toc == None:
-        toc = f'{dir}/{path_toc}'
+      toc = f'{dir}/{toc}'
 
       #obtener cada capitulo con el xhtml del texto
       with open(toc, 'r') as f:
@@ -50,7 +49,7 @@ def _child_text(epub: str, toc, path_toc: str, visited_tocs: set) -> dict:
             links.append(element)
                 
         for tag in links:
-          if tag['href'].split('/')[-1] in visited_tocs:
+          if tag['href'].split('/')[-1] in parent_tocs:
             continue
           
           result[f'{i}.{tag.text}'] = epub_id(tag['href'], dir)
@@ -73,8 +72,8 @@ def _content_chapter(chapter: tuple[str, str], id_end=None) -> str:
         #dame todos los 'p' del directorio
         return p_group(p_content(doc))
 
-def _content_rec(epub: str, result: list, absolute_toc: str, visited_tocs: set, link_path=None) -> list:
-      data_toc = _child_text(epub, link_path, absolute_toc, visited_tocs) #por cada titulo, el path de lo que apunta cada link
+def _content_rec(epub: str, result: list, current_toc: str, parent_tocs: list) -> list:
+      data_toc = _child_text(epub, current_toc, parent_tocs) #por cada titulo, el path de lo que apunta cada link
       values = list(data_toc.values()) #valores del diccionario para preguntar por el id siguiente
       i = 0 #inicializar el iterador
 
@@ -87,9 +86,8 @@ def _content_rec(epub: str, result: list, absolute_toc: str, visited_tocs: set, 
             href = f"{data_toc[key][0].split('/')[-1]}"
             content = []
         
-            if not href in visited_tocs:
-              visited_tocs.add(href)
-              content = _content_rec(epub, [], absolute_toc, visited_tocs, data_toc[key][0])
+            if not href in parent_tocs:
+              content = _content_rec(epub, [], data_toc[key][0].split('/')[-1], parent_tocs + [href])
 
             if len(content) != 0:
               result.append(BookToc(parse_title(key), content))
@@ -114,10 +112,8 @@ def _content_rec(epub: str, result: list, absolute_toc: str, visited_tocs: set, 
 
 def _content(epub: str) -> list:
   unzip(epub) #descomprimir el epub
-  absolute_toc = dir_toc(epub) #guardar la direccion de la toc del epub
-  visited_tocs = set()
-  visited_tocs.add(absolute_toc)
-  result = _content_rec(epub, [], absolute_toc, visited_tocs) #respuesta
+  current_toc = dir_toc(epub) #guardar la direccion de la toc del epub
+  result = _content_rec(epub, [], current_toc, [current_toc]) #respuesta
   rem_dirs([f"{epub.replace('.epub', '')}"]) #borrar el descomprimido luego del parsing
   return result
 
