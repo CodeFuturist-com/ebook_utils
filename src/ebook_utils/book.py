@@ -4,7 +4,7 @@ from bs4 import BeautifulSoup
 from ebook_utils.templates import *
 
 #metodos auxiliares
-from ebook_utils.utils import create_folder, compress, rem_dirs, check_epub, unzip, dir_toc, p_group, p_content, find_root_folder, epub_id, in_links, parse_title
+from ebook_utils.utils import create_folder, compress, rem_dirs, check_epub, unzip, dir_toc, p_group, p_content, find_root_folder, epub_id, parse_title, dir_text
 
 #devolver un 'BookMeta' con la metadata de un epub
 def meta(epub: str):
@@ -31,16 +31,9 @@ def meta(epub: str):
   return BookMeta(metadata_info['title'], metadata_info['creator'], metadata_info['identifier'],
                   metadata_info['subtitle'], metadata_info['publisher'], metadata_info['email'])
 
-def _child_text(epub: str, toc, path_toc: str, visited_links: set) -> dict:
+def _child_text(epub: str, toc, path_toc: str, visited_tocs: set) -> dict:
       result = {} #respuesta
-      root_folder = find_root_folder(f"{epub.replace('.epub', '')}") #carpeta raiz de los textos
-      dir = f"{epub.replace('.epub', '')}/{root_folder}" #inicializar el directorio y la toc
-
-      #construir el directorio
-      for file in os.listdir(dir):
-         if file.lower() == 'text':
-           dir += f'/{file}'
-           break
+      dir = dir_text(epub)
          
       #crear el toc
       if toc == None:
@@ -54,11 +47,10 @@ def _child_text(epub: str, toc, path_toc: str, visited_links: set) -> dict:
         
         for element in doc.body.findAll('a'):
           if element.text != None and 'href' in element.attrs:
-            if not in_links(links, element):
-              links.append(element)
+            links.append(element)
                 
         for tag in links:
-          if tag['href'].split('/')[-1] in visited_links:
+          if tag['href'].split('/')[-1] in visited_tocs:
             continue
           
           result[f'{i}.{tag.text}'] = epub_id(tag['href'], dir)
@@ -81,8 +73,8 @@ def _content_chapter(chapter: tuple[str, str], id_end=None) -> str:
         #dame todos los 'p' del directorio
         return p_group(p_content(doc))
 
-def _content_rec(epub: str, result: list, absolute_toc: str, visited_links: set, link_path=None) -> list:
-      data_toc = _child_text(epub, link_path, absolute_toc, visited_links) #por cada titulo, el path de lo que apunta cada link
+def _content_rec(epub: str, result: list, absolute_toc: str, visited_tocs: set, link_path=None) -> list:
+      data_toc = _child_text(epub, link_path, absolute_toc, visited_tocs) #por cada titulo, el path de lo que apunta cada link
       values = list(data_toc.values()) #valores del diccionario para preguntar por el id siguiente
       i = 0 #inicializar el iterador
 
@@ -90,28 +82,28 @@ def _content_rec(epub: str, result: list, absolute_toc: str, visited_links: set,
         with open(data_toc[key][0], 'r') as f:
           doc = BeautifulSoup(f, 'xml')
 
-          #si tiene mas de un tag 'a' y no tiene tags 'p' es una toc
-          if len(doc.find_all('a')) > 1 and doc.find('p') == None:
-            visited_links.add(f"{data_toc[key][0].split('/')[-1]}#{data_toc[key][1]}" if data_toc[key][1] != None else f"{data_toc[key][0].split('/')[-1]}")
-            content = _content_rec(epub, [], absolute_toc, visited_links, data_toc[key][0])
+          #si tiene mas de un tag 'a' y no tiene tags 'p' es una toc o todos los tags 'p' estan vacios
+          if len(doc.find_all('a')) > 1 and ((doc.find(class_='sgc-toc-level') != None or doc.find(class_='sgc-toc-level-1') != None) or (doc.find('p') == None or len(list(filter(lambda x: x.text.strip() != '', doc.find_all('p')))) == 0)):
+            href = f"{data_toc[key][0].split('/')[-1]}"
+            content = []
+        
+            if not href in visited_tocs:
+              visited_tocs.add(href)
+              content = _content_rec(epub, [], absolute_toc, visited_tocs, data_toc[key][0])
 
             if len(content) != 0:
               result.append(BookToc(parse_title(key), content))
 
           #si hay 2 path iguales consecutivos, el title referencia a un id
           elif i < len(data_toc) - 1 and data_toc[key][0] == values[i + 1][0]:
-            value_visit = f"{data_toc[key][0].split('/')[-1]}#{data_toc[key][1]}" if data_toc[key][1] != None else f"{data_toc[key][0].split('/')[-1]}"
-            content = '' if value_visit in visited_links else _content_chapter(data_toc[key], values[i + 1][1])
-            visited_links.add(value_visit)
+            content = _content_chapter(data_toc[key], values[i + 1][1])
             
             if content != '':
               result.append(BookChapter(parse_title(key), content))
 
           #en cualquier oto caso, dame todos los p
           else:
-            value_visit = f"{data_toc[key][0].split('/')[-1]}#{data_toc[key][1]}" if data_toc[key][1] != None else f"{data_toc[key][0].split('/')[-1]}"
-            content = '' if value_visit in visited_links else _content_chapter(data_toc[key])
-            visited_links.add(value_visit)
+            content = _content_chapter(data_toc[key])
 
             if content != '':
               result.append(BookChapter(parse_title(key), content))
@@ -120,18 +112,19 @@ def _content_rec(epub: str, result: list, absolute_toc: str, visited_links: set,
 
       return result
 
-def _content(epub: str) -> dict:
+def _content(epub: str) -> list:
   unzip(epub) #descomprimir el epub
   absolute_toc = dir_toc(epub) #guardar la direccion de la toc del epub
-  aux = set()
-  aux.add(absolute_toc)
-  result = _content_rec(epub, [], absolute_toc, aux) #respuesta
+  visited_tocs = set()
+  visited_tocs.add(absolute_toc)
+  result = _content_rec(epub, [], absolute_toc, visited_tocs) #respuesta
   rem_dirs([f"{epub.replace('.epub', '')}"]) #borrar el descomprimido luego del parsing
   return result
 
 def is_toc(page: any) -> bool:
     if isinstance(page, BookToc): return True
     return False
+
 
 class BookMeta:
     def __init__(self, title: str, author: str, ean: str, subtitle='', publisher='', email=''):
