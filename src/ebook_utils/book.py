@@ -194,10 +194,20 @@ class BookChapter:
           f.write(CHAPTER.format(meta['title'], self.title, self.content))
         return index
 
+def toc_equal(a, b) -> bool:
+   contents_a = [x.title for x in a._contents]
+   contents_b = [x.title for x in b._contents]
+
+   return contents_a == contents_b
+
 class BookToc:
-    def __init__(self, title: str, contents: list) -> None:
+    def __init__(self, title: str, contents: list, references = None) -> None:
         self._title = title
         self._contents = contents
+        self._references = None
+
+        if references is not None:
+           self._references = references
 
     @classmethod
     def from_book(cls, title: str, book: str):
@@ -232,19 +242,49 @@ class BookToc:
     def __str__(self) -> str:
        return f"{self.title}"
     
-    def generate(self, meta: BookMeta, index: str, is_main=False) -> int:
+    def post_process(self, toc_data = []) -> list:
+      l_toc_data = toc_data
+
+      for page in self._contents:
+        found = False
+
+        if is_toc(page):
+          for toc in l_toc_data:
+            if toc_equal(toc, page):
+              page._contents = []
+              page._references = toc
+              found = True
+              break
+
+          if not found:
+            l_toc_data.append(page)
+            l_toc_data = page.post_process(l_toc_data)
+      return l_toc_data
+
+               
+    
+    def generate(self, meta: BookMeta, index: str, is_main=False, toc_data = {}) -> int:
         l_index = index
+        l_toc_data = toc_data
 
         if is_main:
             with open('my_epub/OEBPS/Text/contents.xhtml', 'w') as f:
                 links = ''
               
                 for page in self._contents:
-                    links += TocLink(l_index + 1, page.title).content
-
                     if is_toc(page):
-                        l_index = page.generate(meta, l_index + 1)
+                      if page._references is not None:
+                        links += TocLink(l_toc_data[page._references.title], page.title).content
+                      else:
+                        links += TocLink(l_index + 1, page.title).content
+                    else:                    
+                      links += TocLink(l_index + 1, page.title).content
+
+                    if is_toc(page):                        
+                        l_toc_data[page.title] = l_index + 1
+                        l_index = page.generate(meta, l_index + 1, toc_data=l_toc_data)
                     else:
+                        l_toc_data[page.title] = l_index + 1
                         l_index = page.generate(meta, l_index + 1)
                     
                 f.write(TOC.format(links))
@@ -253,16 +293,24 @@ class BookToc:
                 links = ''
               
                 for page in self._contents:
-                    links += TocLink(l_index + 1, page.title).content
+                    if is_toc(page):
+                      if page._references is not None:
+                        links += TocLink(l_toc_data[page._references.title], page.title).content
+                      else:
+                        links += TocLink(l_index + 1, page.title).content
+                    else:
+                      links += TocLink(l_index + 1, page.title).content
 
                     if is_toc(page):
-                        l_index = page.generate(meta, l_index + 1)
+                        l_toc_data[page.title] = l_index + 1
+                        l_index = page.generate(meta, l_index + 1, toc_data=l_toc_data)
                     else:
+                        l_toc_data[page.title] = l_index + 1
                         l_index = page.generate(meta, l_index + 1)
                     
                 f.write(NESTED_TOC.format(self.title, links))
         return l_index
-
+    
 #objeto para manejar los navpoints de toc.ncx
 class NavPoint:
   def __init__(self, page: BookChapter, index: int) -> None:
@@ -311,6 +359,7 @@ class Book:
     def from_book(cls, book):
        meta = BookMeta.from_book(book)
        toc = BookToc.from_book(meta['title'], book)
+       toc.post_process()
        return cls(toc, meta)
 
     def export(self) -> str:
