@@ -4,3 +4,4 @@ dist
 __pycache__
 src/ebook_utils/assets
 venv
+Good formatting examples/
