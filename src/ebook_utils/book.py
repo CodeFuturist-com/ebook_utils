@@ -191,7 +191,7 @@ class BookChapter:
     def generate(self, meta: BookMeta, index: int) -> int:
         with open(f'my_epub/OEBPS/Text/part000{index}.xhtml', 'w') as f:
           self._ref = f'part000{index}.xhtml'
-          f.write(CHAPTER.format(meta['title'], self.title, self.content))
+          f.write(CHAPTER.format(meta['title'], self.title, self.content.replace('\n', '<p></p>')))
         return index
 
 def toc_equal(a, b) -> bool:
