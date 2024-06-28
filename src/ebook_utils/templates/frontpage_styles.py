@@ -38,4 +38,29 @@ p{
 .ISBN_code{
   padding-top: 10px;
   color: slategray;
-}"""
+}
+
+.center {
+  text-align: center;
+}
+
+.sgc {
+  margin-bottom: 2em;
+}
+
+.sgc-toc-level-1 {
+  margin-left: 2em;
+  padding: 0;
+}
+
+.sgc-toc-level-2 {
+  margin-left: 4em;
+  padding: 0;
+}
+
+.sgc-toc-level-3 {
+  margin-left: 6em;
+  padding: 0;
+}
+"""
+
