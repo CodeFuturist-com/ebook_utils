@@ -93,18 +93,18 @@ def _content_rec(epub: str, result: list, current_toc: str, parent_tocs: list) -
               result.append(BookToc(parse_title(key), content, node_class=data_toc[key][1]))
 
           #si hay 2 path iguales consecutivos, el title referencia a un id
-          elif i < len(data_toc) - 1 and data_toc[key][0] == values[i + 1][0][0]:
+          elif i < len(data_toc) - 1 and data_toc[key][0][0] == values[i + 1][0][0]:
             content = _content_chapter(data_toc[key][0], values[i + 1][0][1])
             
-            if content != '':
-              result.append(BookChapter(parse_title(key), content, values[i + 1][1]))
+            # if content != '':
+            result.append(BookChapter(parse_title(key), content, values[i + 1][1]))
 
           #en cualquier oto caso, dame todos los p
           else:
             content = _content_chapter(data_toc[key][0])
 
-            if content != '':
-              result.append(BookChapter(parse_title(key), content, values[i][1]))
+            # if content != '':
+            result.append(BookChapter(parse_title(key), content, values[i][1]))
 
         i += 1
 
