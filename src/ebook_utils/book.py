@@ -164,15 +164,23 @@ class BookMeta:
         return cls(metadata_info['title'], metadata_info['creator'], metadata_info['identifier'],
                         metadata_info['subtitle'], metadata_info['publisher'], metadata_info['email'])
 
+
+def format_amp(value: str) -> str:
+    return value.replace('&', '&amp;')
+
+
 class BookNode:
    def __init__(self, node_class: str) -> None:
       self._node_class = node_class
 
+
+
+
 class BookChapter(BookNode):
     def __init__(self, title: str, content: str, node_class = "") -> None:
         super().__init__(node_class)
-        self._title = title
-        self._content = content.replace('&', '&amp;')
+        self._title = format_amp(title)
+        self._content = format_amp(content)
 
     @property
     def title(self) -> str:
@@ -353,7 +361,8 @@ class TocLink:
     result += f'<div class="{self._classname}">\n'
     result += f' <a href="part000{self._index}.xhtml">{self._title}</a>\n'
     result += '</div>\n'
-    return result.replace('&', '&amp;')
+    #return result.replace('&', '&amp;')
+    return result
     
   @property
   def content(self) -> str:
