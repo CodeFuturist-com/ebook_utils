@@ -4,3 +4,4 @@ dist
 __pycache__
 src/ebook_utils/assets
 venv
+src/ebook_utils/parse_epub

@@ -48,7 +48,12 @@ p{
   margin-bottom: 2em;
 }
 
-.sgc-toc-level-1 {
+.sgc-toc-level, .tocL-1 {
+  margin-left: 1em;
+  padding: 0;
+}
+
+.sgc-toc-level-1, .tocL-2, .tocL-3, .tocL-4, .tocL-5, .tocL-6 {
   margin-left: 2em;
   padding: 0;
 }
@@ -62,5 +67,19 @@ p{
   margin-left: 6em;
   padding: 0;
 }
+
+.lv1 {
+  margin-top: 0;
+  padding-left: 0;
+  padding-top: 0.2em;
+}
+
+.lv2, .lv3, .lv4, .lv5, .lv6 {
+  margin-top: 0;
+  padding-left: 1.2em;
+  padding-top: 0.2em;
+}
+
+
 """
 

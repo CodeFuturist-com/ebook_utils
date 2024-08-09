@@ -1,7 +1,9 @@
 import os
+import glob
 
 from book import Book, BookChapter, BookMeta, BookToc
 from utils import rem_dirs
+
 
 #EXPORT
 #meta = BookMeta('ALL ABOUT SEX', 'Sr Sex', 'sex123',subtitle='Sex Edition', email='sex@gmail.com')
@@ -15,10 +17,21 @@ from utils import rem_dirs
 #data = BookToc.from_book('sex', os.path.join(content_path, '9788027244980.epub'))
 #print(data)
 
+PROCESS_SINGLE_FILE = True
 
-#rel_path = os.path.dirname(os.path.abspath(__file__))
-#content_path = os.path.join(rel_path, "parse_epub/assets")
-#data = Book.from_book(os.path.join(content_path, '9788027244980.epub'))
+if PROCESS_SINGLE_FILE:
+    rel_path = os.path.dirname(os.path.abspath(__file__))
+    content_path = os.path.join(rel_path, "parse_epub/assets")
+    data = Book.from_book(os.path.join(content_path, '8596547391173.epub'))
+    data.export()
+else:
+    rel_path = os.path.dirname(os.path.abspath(__file__))
+    content_path = os.path.join(rel_path, "parse_epub/assets")
+    epub_files = glob.glob(os.path.join(content_path, '*.epub'))
+
+    for epub_file in epub_files:
+        data = Book.from_book(epub_file)
+        data.export()
 #print(data)
 
 
