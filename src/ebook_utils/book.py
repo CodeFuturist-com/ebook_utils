@@ -9,7 +9,7 @@ from ebook_utils.utils import create_folder, compress, rem_dirs, check_epub, unz
 #devolver un 'BookMeta' con la metadata de un epub
 def meta(epub: str):
   metadata_info: dict = {}  #estructura donde se almacenara la data
-  tags = ['title', 'creator', 'identifier', 'publisher', 'subtitle', 'email'] #tags de la metadata en content
+  tags = ['title', 'creator', 'identifier', 'publisher', 'subtitle', 'email', 'language'] #tags de la metadata en content
   
   #armar el directorio
   root_folder = find_root_folder(f"{epub.replace('.epub', '')}")
@@ -29,7 +29,7 @@ def meta(epub: str):
       metadata_info[tag] = tag_value.string.replace('&', '&amp') if tag_value != None else ''
         
   return BookMeta(metadata_info['title'], metadata_info['creator'], metadata_info['identifier'],
-                  metadata_info['subtitle'], metadata_info['publisher'], metadata_info['email'])
+                  metadata_info['subtitle'], metadata_info['publisher'], metadata_info['email'], metadata_info['language'])
 
 def _child_text(epub: str, toc: str, parent_tocs: set) -> dict:
       result = {} #respuesta
@@ -123,14 +123,15 @@ def is_toc(page: any) -> bool:
 
 
 class BookMeta:
-    def __init__(self, title: str, author: str, ean: str, subtitle='', publisher='', email=''):
+    def __init__(self, title: str, author: str, ean: str, subtitle='', publisher='', email='', language=''):
         self._meta = {
             'title': title,
             'author': author,
             'ean': ean,
             'subtitle': subtitle,
             'publisher': publisher,
-            'email': email
+            'email': email,
+            'language': language
         }
 
     def __getitem__(self, key):
@@ -139,7 +140,7 @@ class BookMeta:
     @classmethod
     def from_book(cls, book):
         metadata_info: dict = {}  #estructura donde se almacenara la data
-        tags = ['title', 'creator', 'identifier', 'publisher', 'subtitle', 'email'] #tags de la metadata en content
+        tags = ['title', 'creator', 'identifier', 'publisher', 'subtitle', 'email', 'language'] #tags de la metadata en content
         
         unzip(book)
         #armar el directorio
@@ -162,7 +163,7 @@ class BookMeta:
         rem_dirs([f"{book.replace('.epub', '')}"]) 
               
         return cls(metadata_info['title'], metadata_info['creator'], metadata_info['identifier'],
-                        metadata_info['subtitle'], metadata_info['publisher'], metadata_info['email'])
+                        metadata_info['subtitle'], metadata_info['publisher'], metadata_info['email'], metadata_info['language'])
 
 
 def format_amp(value: str) -> str:
