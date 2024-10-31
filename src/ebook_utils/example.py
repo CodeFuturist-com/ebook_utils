@@ -17,12 +17,12 @@ from utils import rem_dirs
 #data = BookToc.from_book('sex', os.path.join(content_path, '9788027244980.epub'))
 #print(data)
 
-PROCESS_SINGLE_FILE = True
+PROCESS_SINGLE_FILE = False
 
 if PROCESS_SINGLE_FILE:
     rel_path = os.path.dirname(os.path.abspath(__file__))
     content_path = os.path.join(rel_path, "parse_epub/assets")
-    data = Book.from_book(os.path.join(content_path, '8596547391173.epub'))
+    data = Book.from_book(os.path.join(content_path, '4064066399238.epub'))
     data.export()
 else:
     rel_path = os.path.dirname(os.path.abspath(__file__))

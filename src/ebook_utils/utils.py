@@ -198,6 +198,10 @@ def find_root_folder(directory: str):
 #returnar los 'p' entre 2 tags 
 def p_content(doc: BeautifulSoup, tag_start=None, id_end=None):
   result = []
+
+  #remove the a tags from the document
+  for a in doc.find_all('a'):
+    a.decompose()
   
   if tag_start == None:
     return doc.body.find_all('p')
